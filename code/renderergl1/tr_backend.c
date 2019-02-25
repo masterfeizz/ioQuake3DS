@@ -487,7 +487,7 @@ void RB_BeginDrawingView (void) {
 		plane2[3] = DotProduct (plane, backEnd.viewParms.or.origin) - plane[3];
 
 		qglLoadMatrixf( s_flipMatrix );
-		qglClipPlane (GL_CLIP_PLANE0, plane2);
+		//qglClipPlane (GL_CLIP_PLANE0, plane2);
 		qglEnable (GL_CLIP_PLANE0);
 	} else {
 		qglDisable (GL_CLIP_PLANE0);
@@ -1074,7 +1074,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 		unsigned char *stencilReadback;
 
 		stencilReadback = ri.Hunk_AllocateTempMemory( glConfig.vidWidth * glConfig.vidHeight );
-		qglReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
+		//qglReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
 
 		for ( i = 0; i < glConfig.vidWidth * glConfig.vidHeight; i++ ) {
 			sum += stencilReadback[i];

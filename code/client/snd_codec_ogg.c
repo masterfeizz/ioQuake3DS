@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // includes for the OGG codec
 #include <errno.h>
 #define OV_EXCLUDE_STATIC_CALLBACKS
-#include <vorbis/vorbisfile.h>
+#include <tremor/ivorbisfile.h>
 
 // The OGG codec can return the samples in a number of different formats,
 // we use the standard signed short format.
@@ -388,7 +388,7 @@ int S_OGG_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer)
 	while(-1)
 	{
 		// read some bytes from the OGG codec
-		c = ov_read((OggVorbis_File *) stream->ptr, bufPtr, bytesLeft, IsBigEndian, OGG_SAMPLEWIDTH, 1, &BS);
+		c = ov_read((OggVorbis_File *) stream->ptr, bufPtr, bytesLeft, &BS);
 		
 		// no more bytes are left
 		if(c <= 0)

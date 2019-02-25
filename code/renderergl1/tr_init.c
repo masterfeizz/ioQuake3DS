@@ -376,7 +376,7 @@ byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, int *pa
 	buffer = ri.Hunk_AllocateTempMemory(padwidth * height + *offset + packAlign - 1);
 	
 	bufstart = PADP((intptr_t) buffer + *offset, packAlign);
-	qglReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+	//qglReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, bufstart);
 	
 	*offset = bufstart - buffer;
 	*padlen = padwidth - linelen;
@@ -775,8 +775,7 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 
 	cBuf = PADP(cmd->captureBuffer, packAlign);
 		
-	qglReadPixels(0, 0, cmd->width, cmd->height, GL_RGB,
-		GL_UNSIGNED_BYTE, cBuf);
+	//qglReadPixels(0, 0, cmd->width, cmd->height, GL_RGB, GL_UNSIGNED_BYTE, cBuf);
 
 	memcount = padwidth * cmd->height;
 
@@ -915,21 +914,9 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	ri.Printf( PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
 	ri.Printf( PRINT_ALL, "GL_EXTENSIONS: " );
-	if ( qglGetStringi )
-	{
-		GLint numExtensions;
-		int i;
 
-		qglGetIntegerv( GL_NUM_EXTENSIONS, &numExtensions );
-		for ( i = 0; i < numExtensions; i++ )
-		{
-			ri.Printf( PRINT_ALL, "%s ", qglGetStringi( GL_EXTENSIONS, i ) );
-		}
-	}
-	else
-	{
-		R_PrintLongString( glConfig.extensions_string );
-	}
+	R_PrintLongString( glConfig.extensions_string );
+
 	ri.Printf( PRINT_ALL, "\n" );
 	ri.Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 	ri.Printf( PRINT_ALL, "GL_MAX_TEXTURE_UNITS_ARB: %d\n", glConfig.numTextureUnits );

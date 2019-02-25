@@ -26,6 +26,86 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __QGL_H__
 #define __QGL_H__
 
+#ifdef _3DS
+
+#include <GL/picaGL.h>
+
+#define APIENTRY
+#define APIENTRYP APIENTRY *
+
+#define qglGenTextures glGenTextures
+#define qglGetIntegerv glGetIntegerv
+#define qglGetError glGetError
+#define qglClearDepth glClearDepth
+#define qglCullFace glCullFace
+#define qglColor4f glColor4f
+#define qglActiveTextureARB glActiveTextureARB
+#define qglClientActiveTextureARB glClientActiveTextureARB
+#define qglDisable glDisable
+#define qglEnable glEnable
+#define qglDepthFunc glDepthFunc
+#define qglEnableClientState glEnableClientState
+#define qglPolygonMode glPolygonMode
+#define qglDepthMask glDepthMask
+
+#define qglLockArraysEXT glLockArraysEXT
+#define qglUnlockArraysEXT glUnlockArraysEXT
+#define qglActiveTextureARB glActiveTextureARB
+#define qglColor3f glColor3f
+#define qglVertex3fv glVertex3fv
+#define qglDepthRange glDepthRange
+#define qglColor4ubv glColor4ubv
+#define qglMultiTexCoord2fARB glMultiTexCoord2f
+#define qglTexCoord2fv glTexCoord2fv
+#define qglVertex3fv glVertex3fv
+#define qglDisableClientState glDisableClientState
+
+#define qglBindTexture glBindTexture
+#define qglTexEnvf glTexEnvf
+#define qglTexEnvi glTexEnvi
+#define qglBlendFunc glBlendFunc
+#define qglAlphaFunc glAlphaFunc
+#define qglClearColor glClearColor
+#define qglClear glClear
+#define qglMatrixMode glMatrixMode
+#define qglLoadMatrixf glLoadMatrixf
+#define qglViewport glViewport
+#define qglScissor glScissor
+#define qglFinish glFinish
+#define qglLoadIdentity glLoadIdentity
+#define qglOrtho glOrtho
+#define qglTexImage2D glTexImage2D
+#define qglTexParameterf glTexParameterf
+#define qglTexParameteri glTexParameteri
+#define qglTexSubImage2D glTexSubImage2D
+#define qglBegin glBegin
+#define qglTexCoord2f glTexCoord2f
+#define qglVertex2f glVertex2f
+#define qglEnd glEnd
+#define qglStencilMask glStencilMask
+#define qglClearStencil glClearStencil
+#define qglStencilFunc glStencilFunc
+#define qglStencilOp glStencilOp
+
+#define qglDrawBuffer glDrawBuffer
+#define qglColorMask glColorMask
+
+#define qglPopMatrix glPopMatrix
+#define qglPushMatrix glPushMatrix
+#define qglDeleteTextures glDeleteTextures
+#define qglDrawElements glDrawElements
+#define qglVertexPointer glVertexPointer
+#define qglColorPointer glColorPointer
+#define qglTexCoordPointer glTexCoordPointer
+#define qglPolygonOffset glPolygonOffset
+#define qglArrayElement glArrayElement
+#define qglTranslatef glTranslatef
+#define qglVertex3f glVertex3f
+
+#define qglShadeModel glShadeModel
+#define qglLineWidth glLineWidth
+
+#else
 #ifdef USE_LOCAL_HEADERS
 #	include "SDL_opengl.h"
 #else
@@ -334,5 +414,7 @@ extern int qglMajorVersion, qglMinorVersion;
 extern int qglesMajorVersion, qglesMinorVersion;
 #define QGL_VERSION_ATLEAST( major, minor ) ( qglMajorVersion > major || ( qglMajorVersion == major && qglMinorVersion >= minor ) )
 #define QGLES_VERSION_ATLEAST( major, minor ) ( qglesMajorVersion > major || ( qglesMajorVersion == major && qglesMinorVersion >= minor ) )
+
+#endif // _3DS
 
 #endif

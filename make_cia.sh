@@ -1,0 +1,1 @@
+makerom -f cia -o Quake3DS.cia -elf Quake3DS.elf -rsf cia.rsf -banner banner.bnr -icon Quake3DS.smdh -target t
