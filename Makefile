@@ -34,7 +34,7 @@ CFLAGS	:=	-Wall -O2 -mword-relocations \
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -D__FLOAT_WORD_ORDER=1 -D__GNU__ -DRELEASE \
 			-DUSE_ICON -DARCH_STRING=\"arm\" -DBOTLIB -DUSE_CODEC_VORBIS \
 			-DNO_VM_COMPILED -DDEFAULT_BASEDIR=\"sdmc:/ioq3\" \
-			-DPRODUCT_VERSION=\"0.1.0\" \
+			-DPRODUCT_VERSION=\"1.0.0\" \
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
@@ -202,7 +202,6 @@ PLATFORM_SOURCES += \
 	ctr/ctr_glimp.c \
 	ctr/ctr_input.c \
 	ctr/ctr_snd.c \
-	ctr/ctr_heap.c \
 	ctr/ctr_net.c \
 	ctr/ctr_main.c \
 	sys/sys_ctr.c

@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "snd_local.h"
 #include "snd_codec.h"
 
-#define DEF_COMSOUNDMEGS "1"
+#define DEF_COMSOUNDMEGS "4"
 
 /*
 ===============================================================================
@@ -50,6 +50,10 @@ static	int totalInUse = 0;
 short *sfxScratchBuffer = NULL;
 sfx_t *sfxScratchPointer = NULL;
 int	   sfxScratchIndex = 0;
+
+#ifdef _3DS
+extern qboolean isN3DS;
+#endif
 
 void	SND_free(sndBuffer *v) {
 	*(sndBuffer **)v = freelist;
@@ -81,7 +85,14 @@ void SND_setup(void) {
 
 	cv = Cvar_Get( "com_soundMegs", DEF_COMSOUNDMEGS, CVAR_LATCH | CVAR_ARCHIVE );
 
-	scs = (cv->integer*1536);
+	scs = (cv->integer*1024);
+
+	#ifdef _3DS
+	if(isN3DS)
+		scs = 4 * 1024;
+	else
+		scs = 2 * 1024;
+	#endif
 
 	buffer = malloc(scs*sizeof(sndBuffer) );
 	// allocate the stack based hunk allocator

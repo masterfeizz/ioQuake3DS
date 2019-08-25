@@ -41,6 +41,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
+int __stacksize__ = 1536 * 1024;
+u32 __ctru_linear_heap_size = 8 * 1024 * 1024;
+
+qboolean isN3DS = qfalse;
+
 static char binaryPath[MAX_OSPATH] = {0};
 static char installPath[MAX_OSPATH] = {0};
 
@@ -326,6 +331,8 @@ int main(int argc, char **argv)
 {
 
     osSetSpeedupEnable(true);
+
+    APT_CheckNew3DS(&isN3DS);
 
     gfxInit(GSP_RGB565_OES,GSP_RGB565_OES,false);
     gfxSetDoubleBuffering(GFX_BOTTOM, false);

@@ -38,9 +38,9 @@ int demo_protocols[] =
 
 #define MIN_DEDICATED_COMHUNKMEGS 1
 
-#define MIN_COMHUNKMEGS 32
+#define MIN_COMHUNKMEGS 54
 #define DEF_COMHUNKMEGS 32
-#define DEF_COMZONEMEGS 18
+#define DEF_COMZONEMEGS 24
 
 #define DEF_COMHUNKMEGS_S	XSTRING(DEF_COMHUNKMEGS)
 #define DEF_COMZONEMEGS_S	XSTRING(DEF_COMZONEMEGS)
@@ -49,7 +49,6 @@ int		com_argc;
 char	*com_argv[MAX_NUM_ARGVS+1];
 
 jmp_buf abortframe;		// an ERR_DROP occurred, exit the entire frame
-
 
 FILE *debuglogfile;
 static fileHandle_t pipefile;
@@ -123,6 +122,10 @@ qboolean	com_gameRestarting = qfalse;
 qboolean	com_gameClientRestarting = qfalse;
 
 char	com_errorMessage[MAXPRINTMSG];
+
+#ifdef _3DS
+extern qboolean isN3DS;
+#endif
 
 void Com_WriteConfig_f( void );
 void CIN_CloseAllVideos( void );
@@ -1449,10 +1452,19 @@ void Com_InitZoneMemory( void ) {
 		s_zoneTotal = cv->integer * 1024 * 1024;
 	}
 
+	#ifdef _3DS
+	if(isN3DS)
+		s_zoneTotal = 24 * 1024 * 1024;
+	else
+		s_zoneTotal = 10 * 1024 * 1024;
+	#endif
+
 	mainzone = calloc( s_zoneTotal, 1 );
+
 	if ( !mainzone ) {
 		Com_Error( ERR_FATAL, "Zone data failed to allocate %i megs", s_zoneTotal / (1024*1024) );
 	}
+
 	Z_ClearZone( mainzone, s_zoneTotal );
 
 }
@@ -1574,7 +1586,15 @@ void Com_InitHunkMemory( void ) {
 		s_hunkTotal = cv->integer * 1024 * 1024;
 	}
 
+	#ifdef _3DS
+	if(isN3DS)
+		s_hunkTotal = 50 * 1024 * 1024;
+	else
+		s_hunkTotal = 26 * 1024 * 1024;
+	#endif
+
 	s_hunkData = calloc( s_hunkTotal + 31, 1 );
+
 	if ( !s_hunkData ) {
 		Com_Error( ERR_FATAL, "Hunk data failed to allocate %i megs", s_hunkTotal / (1024*1024) );
 	}
