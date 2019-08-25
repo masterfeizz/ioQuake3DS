@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../client/client.h"
 #include "../sys/sys_local.h"
 
+#define CTRL(a) ((a)-'a'+1)
+
 static bool keyboard_enabled = false;
 static bool shift_pressed = false;
 
@@ -69,7 +71,7 @@ static buttonMapping buttonMap[14] =
 static uint16_t keymap[14 * 6] = 
 {
 	K_ESCAPE , K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12, 0,
-	'`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\r',
+	K_CONSOLE, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', K_BACKSPACE,
 	K_TAB, 'q' , 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '|',
 	0, 'a' , 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', K_ENTER, K_ENTER,
 	K_SHIFT, 'z' , 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, K_UPARROW, 0,
@@ -147,7 +149,18 @@ static void UpdateTouch( void )
 
 				button_pressed = 0;
 			}
-			else if(!(button_pressed < 32 || button_pressed > 126 || button_pressed == '`'))
+			else if(button_pressed == K_CONSOLE)
+			{
+				Com_QueueEvent(Sys_Milliseconds(), SE_KEY, K_CONSOLE, true, 0, NULL);
+				Com_QueueEvent(Sys_Milliseconds(), SE_KEY, K_CONSOLE, false, 0, NULL);
+
+				button_pressed = 0;
+			}
+			else if(button_pressed == K_BACKSPACE)
+			{
+				Com_QueueEvent(Sys_Milliseconds(), SE_CHAR, CTRL('h'), 0, 0, NULL );
+			}
+			else if(!(button_pressed < 32 || button_pressed > 126))
 			{
 				Com_QueueEvent(Sys_Milliseconds(), SE_CHAR, button_pressed, 0, 0, NULL);
 			}
