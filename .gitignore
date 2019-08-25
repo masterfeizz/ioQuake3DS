@@ -3,6 +3,10 @@ Makefile.local
 *.swp
 *tags
 *~
+*.elf
+*.smdh
+*.3dsx
+*.cia
 
 # OS X
 ####################

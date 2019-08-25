@@ -23,26 +23,26 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
-#	include <sys/socket.h>
-#	include <errno.h>
-#	include <netdb.h>
-#	include <netinet/in.h>
-#	include <sys/types.h>
-#	include <sys/time.h>
-#	include <unistd.h>
-#	include <fcntl.h>
-#	include <arpa/inet.h>
+#include <3ds.h>
+
+#include <sys/socket.h>
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <arpa/inet.h>
 
 typedef int SOCKET;
-#	define INVALID_SOCKET		-1
-#	define SOCKET_ERROR			-1
-#	define closesocket			close
-#	define ioctlsocket			ioctl
+#define INVALID_SOCKET		-1
+#define SOCKET_ERROR		-1
+#define closesocket			close
+#define ioctlsocket			ioctl
 typedef int	ioctlarg_t;
-#	define socketError			errno
+#define socketError			errno
 
-#include <3ds.h>
-#include <sys/select.h>
 
 static qboolean usingSocks = qfalse;
 static int networkingEnabled = 0;
@@ -65,19 +65,21 @@ static struct sockaddr	socksRelayAddr;
 static SOCKET	ip_socket = INVALID_SOCKET;
 static SOCKET	socks_socket = INVALID_SOCKET;
 
-#ifndef IF_NAMESIZE
-#define IF_NAMESIZE 16
-#endif
+#define SOC_BUFFERSIZE  0x80000
+#define SOC_ALIGN       0x1000
 
-// use an admin local address per default so that network admins can decide on how to handle quake3 traffic.
-#define NET_MULTICAST_IP6 "ff04::696f:7175:616b:6533"
+static uint32_t *SOC_buffer = NULL;
+
+#ifndef IF_NAMESIZE
+  #define IF_NAMESIZE 16
+#endif
 
 #define	MAX_IPS		32
 
 typedef struct
 {
 	char ifname[IF_NAMESIZE];
-
+	
 	netadrtype_t type;
 	sa_family_t family;
 	struct sockaddr_storage addr;
@@ -132,7 +134,7 @@ static struct addrinfo *SearchAddrInfo(struct addrinfo *hints, sa_family_t famil
 
 		hints = hints->ai_next;
 	}
-
+	
 	return NULL;
 }
 
@@ -143,26 +145,51 @@ Sys_StringToSockaddr
 */
 static qboolean Sys_StringToSockaddr(const char *s, struct sockaddr *sadr, int sadr_len, sa_family_t family)
 {
-	struct hostent	*h;
-	//char	*colon; // bk001204 - unused
+	struct addrinfo hints;
+	struct addrinfo *res = NULL;
+	struct addrinfo *search = NULL;
+	struct addrinfo *hintsp;
+	int retval;
 	
-	memset (sadr, 0, sizeof(*sadr));
-	((struct sockaddr_in *)sadr)->sin_family = AF_INET;
+	memset(sadr, '\0', sizeof(*sadr));
+	memset(&hints, '\0', sizeof(hints));
+
+	hintsp = &hints;
+	hintsp->ai_family = family;
+	hintsp->ai_socktype = SOCK_DGRAM;
 	
-	((struct sockaddr_in *)sadr)->sin_port = 0;
-	
-	if ( s[0] >= '0' && s[0] <= '9')
+	retval = getaddrinfo(s, NULL, hintsp, &res);
+
+	if(!retval)
 	{
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr(s);
+		if(family == AF_UNSPEC)
+		{
+			if(net_enabled->integer & NET_ENABLEV4)
+				search = SearchAddrInfo(res, AF_INET);
+		}
+		else
+			search = SearchAddrInfo(res, family);
+
+		if(search)
+		{
+			if(search->ai_addrlen > sadr_len)
+				search->ai_addrlen = sadr_len;
+				
+			memcpy(sadr, search->ai_addr, search->ai_addrlen);
+			freeaddrinfo(res);
+			
+			return qtrue;
+		}
+		else
+			Com_Printf("Sys_StringToSockaddr: Error resolving %s: No address of required type found.\n", s);
 	}
 	else
-	{
-		if (! (h = gethostbyname(s)) )
-			return qfalse;
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
-	}
+		Com_Printf("Sys_StringToSockaddr: Error resolving %s: %s\n", s, gai_strerror(retval));
 	
-	return qtrue;
+	if(res)
+		freeaddrinfo(res);
+	
+	return qfalse;
 }
 
 /*
@@ -172,10 +199,12 @@ Sys_SockaddrToString
 */
 static void Sys_SockaddrToString(char *dest, int destlen, struct sockaddr *input)
 {
-	int haddr = htonl(((struct sockaddr_in *)input)->sin_addr.s_addr);
+	socklen_t inputlen;
 
-	sprintf(dest, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff, ntohs(((struct sockaddr_in *)input)->sin_port));
+	inputlen = sizeof(struct sockaddr_in);
 
+	if(getnameinfo(input, inputlen, dest, destlen, NULL, 0, NI_NUMERICHOST) && destlen > 0)
+		*dest = '\0';
 }
 
 /*
@@ -186,20 +215,20 @@ Sys_StringToAdr
 qboolean Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family ) {
 	struct sockaddr_storage sadr;
 	sa_family_t fam;
-
+	
 	switch(family)
 	{
 		case NA_IP:
 			fam = AF_INET;
-			break;
+		break;
 		default:
 			fam = AF_UNSPEC;
-			break;
+		break;
 	}
 	if( !Sys_StringToSockaddr(s, (struct sockaddr *) &sadr, sizeof(sadr), fam ) ) {
 		return qfalse;
 	}
-
+	
 	SockadrToNetadr( (struct sockaddr *) &sadr, a );
 	return qtrue;
 }
@@ -215,7 +244,7 @@ qboolean NET_CompareBaseAdrMask(netadr_t a, netadr_t b, int netmask)
 {
 	byte cmpmask, *addra, *addrb;
 	int curbyte;
-
+	
 	if (a.type != b.type)
 		return qfalse;
 
@@ -226,9 +255,17 @@ qboolean NET_CompareBaseAdrMask(netadr_t a, netadr_t b, int netmask)
 	{
 		addra = (byte *) &a.ip;
 		addrb = (byte *) &b.ip;
-
+		
 		if(netmask < 0 || netmask > 32)
 			netmask = 32;
+	}
+	else if(a.type == NA_IP6)
+	{
+		addra = (byte *) &a.ip6;
+		addrb = (byte *) &b.ip6;
+		
+		if(netmask < 0 || netmask > 128)
+			netmask = 128;
 	}
 	else
 	{
@@ -239,7 +276,7 @@ qboolean NET_CompareBaseAdrMask(netadr_t a, netadr_t b, int netmask)
 	curbyte = netmask >> 3;
 
 	if(curbyte && memcmp(addra, addrb, curbyte))
-		return qfalse;
+			return qfalse;
 
 	netmask &= 0x07;
 	if(netmask)
@@ -252,7 +289,7 @@ qboolean NET_CompareBaseAdrMask(netadr_t a, netadr_t b, int netmask)
 	}
 	else
 		return qtrue;
-
+	
 	return qfalse;
 }
 
@@ -277,10 +314,10 @@ const char	*NET_AdrToString (netadr_t a)
 		Com_sprintf (s, sizeof(s), "loopback");
 	else if (a.type == NA_BOT)
 		Com_sprintf (s, sizeof(s), "bot");
-	else if (a.type == NA_IP)
+	else if (a.type == NA_IP || a.type == NA_IP6)
 	{
 		struct sockaddr_storage sadr;
-
+	
 		memset(&sadr, 0, sizeof(sadr));
 		NetadrToSockadr(&a, (struct sockaddr *) &sadr);
 		Sys_SockaddrToString(s, sizeof(s), (struct sockaddr *) &sadr);
@@ -308,7 +345,7 @@ qboolean	NET_CompareAdr (netadr_t a, netadr_t b)
 {
 	if(!NET_CompareBaseAdr(a, b))
 		return qfalse;
-
+	
 	if (a.type == NA_IP)
 	{
 		if (a.port == b.port)
@@ -316,7 +353,7 @@ qboolean	NET_CompareAdr (netadr_t a, netadr_t b)
 	}
 	else
 		return qtrue;
-
+		
 	return qfalse;
 }
 
@@ -340,12 +377,12 @@ qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr)
 	struct sockaddr_storage from;
 	socklen_t	fromlen;
 	int		err;
-
+	
 	if(ip_socket != INVALID_SOCKET && FD_ISSET(ip_socket, fdr))
 	{
 		fromlen = sizeof(from);
 		ret = recvfrom( ip_socket, (void *)net_message->data, net_message->maxsize, 0, (struct sockaddr *) &from, &fromlen );
-
+		
 		if (ret == SOCKET_ERROR)
 		{
 			err = socketError;
@@ -357,7 +394,7 @@ qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr)
 		{
 
 			memset( ((struct sockaddr_in *)&from)->sin_zero, 0, 8 );
-
+		
 			if ( usingSocks && memcmp( &from, &socksRelayAddr, fromlen ) == 0 ) {
 				if ( ret < 10 || net_message->data[0] != 0 || net_message->data[1] != 0 || net_message->data[2] != 0 || net_message->data[3] != 1 ) {
 					return qfalse;
@@ -374,17 +411,17 @@ qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr)
 				SockadrToNetadr( (struct sockaddr *) &from, net_from );
 				net_message->readcount = 0;
 			}
-
+		
 			if( ret >= net_message->maxsize ) {
 				Com_Printf( "Oversize packet from %s\n", NET_AdrToString (*net_from) );
 				return qfalse;
 			}
-
+			
 			net_message->cursize = ret;
 			return qtrue;
 		}
 	}
-
+	
 	return qfalse;
 }
 
@@ -411,9 +448,6 @@ void Sys_SendPacket( int length, const void *data, netadr_t to ) {
 		(ip_socket == INVALID_SOCKET && to.type == NA_BROADCAST) )
 		return;
 
-	if(to.type == NA_MULTICAST6 && (net_enabled->integer & NET_DISABLEMCAST))
-		return;
-
 	memset(&addr, 0, sizeof(addr));
 	NetadrToSockadr( &to, (struct sockaddr *) &addr );
 
@@ -428,8 +462,7 @@ void Sys_SendPacket( int length, const void *data, netadr_t to ) {
 		ret = sendto( ip_socket, socksBuf, length+10, 0, &socksRelayAddr, sizeof(socksRelayAddr) );
 	}
 	else {
-		if(addr.ss_family == AF_INET)
-			ret = sendto( ip_socket, data, length, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_in) );
+		ret = sendto( ip_socket, data, length, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_in) );
 	}
 	if( ret == SOCKET_ERROR ) {
 		int err = socketError;
@@ -483,7 +516,7 @@ qboolean Sys_IsLANAddress( netadr_t adr ) {
 		if(adr.ip[0] == 127)
 			return qtrue;
 	}
-
+	
 	// Now compare against the networks this computer is member of.
 	for(index = 0; index < numIP; index++)
 	{
@@ -494,7 +527,7 @@ qboolean Sys_IsLANAddress( netadr_t adr ) {
 				compareip = (byte *) &((struct sockaddr_in *) &localIP[index].addr)->sin_addr.s_addr;
 				comparemask = (byte *) &((struct sockaddr_in *) &localIP[index].netmask)->sin_addr.s_addr;
 				compareadr = adr.ip;
-
+				
 				addrsize = sizeof(adr.ip);
 			}
 
@@ -507,13 +540,13 @@ qboolean Sys_IsLANAddress( netadr_t adr ) {
 					break;
 				}
 			}
-
+			
 			if(!differed)
 				return qtrue;
 
 		}
 	}
-
+	
 	return qfalse;
 }
 
@@ -545,7 +578,6 @@ NET_IPSocket
 ====================
 */
 SOCKET NET_IPSocket( char *net_interface, int port, int *err ) {
-
 	SOCKET				newsocket;
 	struct sockaddr_in	address;
 	ioctlarg_t			_true = 1;
@@ -675,13 +707,13 @@ void NET_OpenSocks( int port ) {
 		return;
 	}
 	switch( buf[1] ) {
-		case 0:	// no authentication
-			break;
-		case 2: // username/password authentication
-			break;
-		default:
-			Com_Printf( "NET_OpenSocks: request denied\n" );
-			return;
+	case 0:	// no authentication
+		break;
+	case 2: // username/password authentication
+		break;
+	default:
+		Com_Printf( "NET_OpenSocks: request denied\n" );
+		return;
 	}
 
 	// do username/password authentication if needed
@@ -774,11 +806,11 @@ static void NET_AddLocalAddress(char *ifname, struct sockaddr *addr, struct sock
 {
 	int addrlen;
 	sa_family_t family;
-
+	
 	// only add addresses that have all required info.
 	if(!addr || !netmask || !ifname)
 		return;
-
+	
 	family = addr->sa_family;
 
 	if(numIP < MAX_IPS)
@@ -790,19 +822,18 @@ static void NET_AddLocalAddress(char *ifname, struct sockaddr *addr, struct sock
 		}
 		else
 			return;
-
+		
 		Q_strncpyz(localIP[numIP].ifname, ifname, sizeof(localIP[numIP].ifname));
-
+	
 		localIP[numIP].family = family;
 
 		memcpy(&localIP[numIP].addr, addr, addrlen);
 		memcpy(&localIP[numIP].netmask, netmask, addrlen);
-
+		
 		numIP++;
 	}
 }
 
-static unsigned long myAddr;
 static void NET_GetLocalAddress( void ) {
 	char				hostname[256];
 	struct addrinfo	hint;
@@ -855,7 +886,6 @@ void NET_OpenIP( void ) {
 	int		i;
 	int		err;
 	int		port;
-	int		port6;
 
 	port = net_port->integer;
 
@@ -864,7 +894,6 @@ void NET_OpenIP( void ) {
 	// automatically scan for a valid port, so multiple
 	// dedicated servers can be started without requiring
 	// a different net_port for each one
-
 	if(net_enabled->integer & NET_ENABLEV4)
 	{
 		for( i = 0 ; i < 10 ; i++ ) {
@@ -883,7 +912,7 @@ void NET_OpenIP( void ) {
 					break;
 			}
 		}
-
+		
 		if(ip_socket == INVALID_SOCKET)
 			Com_Printf( "WARNING: Couldn't bind to a v4 ip address.\n");
 	}
@@ -915,7 +944,7 @@ static qboolean NET_GetCvars( void ) {
 	net_ip = Cvar_Get( "net_ip", "0.0.0.0", CVAR_LATCH );
 	modified += net_ip->modified;
 	net_ip->modified = qfalse;
-
+	
 	net_port = Cvar_Get( "net_port", va( "%i", PORT_SERVER ), CVAR_LATCH );
 	modified += net_port->modified;
 	net_port->modified = qfalse;
@@ -1000,7 +1029,7 @@ void NET_Config( qboolean enableNetworking ) {
 			closesocket( socks_socket );
 			socks_socket = INVALID_SOCKET;
 		}
-
+		
 	}
 
 	if( start )
@@ -1018,14 +1047,9 @@ void NET_Config( qboolean enableNetworking ) {
 NET_Init
 ====================
 */
-
-#define SOC_BUFFERSIZE  0x80000
-#define SOC_ALIGN       0x1000
-
-static u32 *SOC_buffer = NULL;
-
-void NET_Init( void ) {
-	SOC_buffer = (u32*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
+void NET_Init( void )
+{
+	SOC_buffer = (uint32_t*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
 	
 	if(SOC_buffer == NULL)
 		Sys_Error("Failed to allocate SOC_Buffer\n");
@@ -1034,13 +1058,12 @@ void NET_Init( void ) {
 	
 	if(res != 0)
 	{
-		
 		free(SOC_buffer);
 		return -1;
 	}
 
 	NET_Config( qtrue );
-
+	
 	Cmd_AddCommand ("net_restart", NET_Restart_f);
 }
 
@@ -1050,8 +1073,8 @@ void NET_Init( void ) {
 NET_Shutdown
 ====================
 */
-
-void NET_Shutdown( void ) {
+void NET_Shutdown( void )
+{
 	if ( !networkingEnabled ) {
 		return;
 	}
@@ -1072,7 +1095,7 @@ void NET_Event(fd_set *fdr)
 	byte bufData[MAX_MSGLEN + 1];
 	netadr_t from = {0};
 	msg_t netmsg;
-
+	
 	while(1)
 	{
 		MSG_Init(&netmsg, bufData, sizeof(bufData));
@@ -1105,19 +1128,32 @@ Sleeps msec or until something happens on the network
 */
 void NET_Sleep(int msec)
 {
-	return;
 	struct timeval timeout;
-	fd_set	fdset;
-	extern qboolean stdin_active;
+	fd_set fdr;
+	int retval;
+	SOCKET highestfd = INVALID_SOCKET;
 
-	if (!ip_socket || !com_dedicated->integer)
-		return; // we're not a server, just run full speed
+	if(msec < 0)
+		msec = 0;
 
-	FD_ZERO(&fdset);
-	FD_SET(ip_socket, &fdset); // network socket
+	FD_ZERO(&fdr);
+
+	if(ip_socket != INVALID_SOCKET)
+	{
+		FD_SET(ip_socket, &fdr);
+
+		highestfd = ip_socket;
+	}
+
 	timeout.tv_sec = msec/1000;
 	timeout.tv_usec = (msec%1000)*1000;
-	select(ip_socket+1, &fdset, NULL, NULL, &timeout);
+
+	retval = select(highestfd + 1, &fdr, NULL, NULL, &timeout);
+
+	if(retval == SOCKET_ERROR)
+		Com_Printf("Warning: select() syscall failed: %s\n", NET_ErrorString());
+	else if(retval > 0)
+		NET_Event(&fdr);
 }
 
 /*
@@ -1130,5 +1166,22 @@ void NET_Restart_f(void)
 	NET_Config(qtrue);
 }
 
-void NET_JoinMulticast6(void) {}
-void NET_LeaveMulticast6() {}
+/*
+====================
+NET_JoinMulticast6
+====================
+*/
+void NET_JoinMulticast6(void)
+{
+	//STUBBED
+}
+
+/*
+====================
+NET_LeaveMulticast6
+====================
+*/
+void NET_LeaveMulticast6()
+{
+	//STUBBED
+}

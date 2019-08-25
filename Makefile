@@ -203,7 +203,7 @@ PLATFORM_SOURCES += \
 	ctr/ctr_input.c \
 	ctr/ctr_snd.c \
 	ctr/ctr_heap.c \
-	ctr/net_ctr.c \
+	ctr/ctr_net.c \
 	ctr/ctr_main.c \
 	sys/sys_ctr.c
 
