@@ -369,7 +369,8 @@ int main(int argc, char **argv)
     CON_Init();
     Com_Init(commandLine);
     NET_Init();
-
+    IN_Init(NULL);
+    
     while (aptMainLoop())
     {
         Com_Frame();

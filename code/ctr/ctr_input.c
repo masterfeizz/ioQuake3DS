@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define CTRL(a) ((a)-'a'+1)
 
+cvar_t *in_joystick = NULL;
+
 static bool keyboard_enabled = false;
 static bool shift_pressed = false;
 
@@ -200,9 +202,15 @@ void Key_Event(int key, int value, int time)
 
 void IN_Frame( void )
 {
+	qboolean uiFullscreen;
+	int right_x, right_y;
+
 	hidScanInput();
 	hidTouchRead(&touch);
 	hidCstickRead(&cstick);
+	hidCircleRead(&circlepad);
+
+	uiFullscreen = (uivm && VM_Call( uivm, UI_IS_FULLSCREEN ));
 
 	for(int i = 0; i < 14; i++)
 	{
@@ -212,12 +220,43 @@ void IN_Frame( void )
 				Key_Event( buttonMap[i].key, false, Sys_Milliseconds());
 	}
 
-	int right_x = cstick.dx;
-	int right_y = -cstick.dy;
+	right_x = circlepad.dx;
+	right_y = -circlepad.dy;
 
 	RescaleAnalog( &right_x, &right_y, 25.0f );
 
-	Com_QueueEvent(time, SE_MOUSE, right_x/4, right_y/4, 0, NULL);
+	if(uiFullscreen)
+	{
+		//Emulate the mouse when in the menu
+		Com_QueueEvent( time, SE_MOUSE, right_x / 8, right_y / 8, 0, NULL );
+	}
+	else if(in_joystick->integer)
+	{
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 0, right_x * 3, 0, NULL );
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 1, right_y * 3, 0, NULL );
+	}
+	else
+	{
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 2, right_x * 100, 0, NULL );
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 3, right_y * 100, 0, NULL );
+	}
+
+	right_x = cstick.dx;
+	right_y = -cstick.dy;
+
+	RescaleAnalog( &right_x, &right_y, 25.0f );
+
+	if(in_joystick->integer)
+	{
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 2, right_x * 120, 0, NULL );
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 3, right_y * 120, 0, NULL );
+	}
+	else
+	{
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 0, right_x * 3, 0, NULL );
+		Com_QueueEvent( time, SE_JOYSTICK_AXIS, 1, right_y * 3, 0, NULL );
+	}
+
 
 	UpdateTouch();
 }
@@ -229,7 +268,10 @@ IN_Init
 */
 void IN_Init( void *windowData )
 {
+	in_joystick = Cvar_Get( "in_joystick", "1", CVAR_ARCHIVE|CVAR_LATCH );
+
 	framebuffer = (uint16_t*)gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+
 	DrawSubscreen();
 }
 

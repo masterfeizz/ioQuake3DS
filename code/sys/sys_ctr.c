@@ -805,7 +805,6 @@ Unix specific initialisation
 ==============
 */
 void Sys_PlatformInit(void) {
-    IN_Init(NULL);
 }
 
 /*
