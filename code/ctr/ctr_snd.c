@@ -43,10 +43,6 @@ qboolean SNDDMA_Init(void)
   	if(ndspInit() != 0)
     	return false;
 
-    //Force Quake to use our settings
-    Cvar_SetValue( "s_khz", 22 );
-	Cvar_SetValue( "s_loadas8bit", false );
-
     audio_buffer = linearAlloc(BUFFER_SIZE);
 
     ndspSetOutputMode(NDSP_OUTPUT_STEREO);
@@ -82,7 +78,7 @@ int SNDDMA_GetDMAPos(void)
 	if(!sound_initialized)
 		return 0;
 
-	return ndspChnGetSamplePos(0);
+	return ndspChnGetSamplePos(0) * 2;
 }
 
 void SNDDMA_Shutdown(void)
