@@ -9,17 +9,17 @@ endif
 TOPDIR ?= $(CURDIR)
 include $(DEVKITARM)/3ds_rules
 
-TARGET		:=	Quake3DS
+TARGET		:=	OpenArena
 BUILD		:=	build
 SOURCES		:=	code
 DATA		:=	code/ctr/assets
 INCLUDES	:=	code/renderercommon code/qcommon code/botlib code/client code/server code/renderergl1 code/ctr code/sys
 #ROMFS		:=	romfs
 
-APP_TITLE		:= Quake3DS 
-APP_DESCRIPTION := Quake III
+APP_TITLE		:= OpenArena 
+APP_DESCRIPTION := OpenArena
 APP_AUTHOR  	:= MasterFeizz
-ICON 			:= icon.png
+ICON 			:= icon_oa.png
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -33,8 +33,8 @@ CFLAGS	:=	-Wall -O2 -mword-relocations \
 
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -D__FLOAT_WORD_ORDER=1 -D__GNU__ -DRELEASE \
 			-DUSE_ICON -DARCH_STRING=\"arm\" -DBOTLIB -DUSE_CODEC_VORBIS \
-			-DNO_VM_COMPILED -DDEFAULT_BASEDIR=\"sdmc:/ioq3\" \
-			-DPRODUCT_VERSION=\"1.0.1\"
+			-DNO_VM_COMPILED -DDEFAULT_BASEDIR=\"sdmc:/openarena\" \
+			-DPRODUCT_VERSION=\"1.0.1\" -DSTANDALONE -DOPENARENA
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
@@ -293,7 +293,7 @@ all: $(BUILD)
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p build/renderercommon build/game build/qcommon build/botlib build/client build/server build/renderergl1 build/ctr build/sys
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.oa
 
 #---------------------------------------------------------------------------------
 clean:

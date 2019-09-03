@@ -1,0 +1,1 @@
+makerom -f cia -o OpenArena.cia -elf OpenArena.elf -rsf cia_oa.rsf -banner banner_oa.bnr -icon OpenArena.smdh -target t

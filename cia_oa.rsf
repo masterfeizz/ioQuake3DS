@@ -1,12 +1,12 @@
 BasicInfo:
-  Title                   : "Quake3DS"
+  Title                   : "OpenArena"
   CompanyCode             : "00"
-  ProductCode             : "CTR-P-QUAKE3"
+  ProductCode             : "CTR-P-OARENA"
   ContentType             : Application
   Logo                    : Nintendo # Nintendo / Licensed / Distributed / iQue / iQueForSystem
 
 TitleInfo:
-  UniqueId                : 0xFF126
+  UniqueId                : 0xFF130
   Category                : Application
   
 Option:
