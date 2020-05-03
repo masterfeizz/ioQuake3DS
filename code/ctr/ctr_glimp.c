@@ -89,7 +89,7 @@ void GLimp_Init( qboolean coreContext)
 	glConfig.vidWidth = 400;
 	glConfig.vidHeight = 240;
 	glConfig.colorBits = 32;
-	glConfig.depthBits = 32;
+	glConfig.depthBits = 24;
 	glConfig.stencilBits = 8;
 	glConfig.displayFrequency = 60;
 	glConfig.stereoEnabled = qfalse;
@@ -108,8 +108,8 @@ void GLimp_Init( qboolean coreContext)
 	strncpy(glConfig.version_string, glGetString(GL_VERSION), sizeof(glConfig.version_string));
 	strncpy(glConfig.extensions_string, glGetString(GL_EXTENSIONS), sizeof(glConfig.extensions_string));
 	
-	qglClearColor( 0, 0, 0, 1 );
-	qglClear( GL_COLOR_BUFFER_BIT );
+	qglClearColor( 0, 0, 0, 0 );
+	qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	
 }
 
@@ -124,4 +124,5 @@ Responsible for doing a swapbuffers
 void GLimp_EndFrame( void )
 {
 	pglSwapBuffers();
+	gfxSwapBuffersGpu();
 }
