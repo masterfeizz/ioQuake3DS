@@ -546,7 +546,7 @@ void Sys_ErrorDialog(const char *error) {
         return;
     }
 
-    #ifndef _3DS
+    #ifndef __3DS__
     // We're crashing, so we don't care much if write() or close() fails.
     while ((size = CON_LogRead(buffer, sizeof(buffer))) > 0) {
         if (write(f, buffer, size) != size) {

@@ -31,10 +31,10 @@ CFLAGS	:=	-Wall -O2 -mword-relocations \
 			-fdata-sections -fno-short-enums \
 			-Wl,--gc-sections $(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -D__FLOAT_WORD_ORDER=1 -D__GNU__ -DRELEASE \
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -D__FLOAT_WORD_ORDER=1 -D__GNU__ -DRELEASE \
 			-DUSE_ICON -DARCH_STRING=\"arm\" -DBOTLIB -DUSE_CODEC_VORBIS \
 			-DNO_VM_COMPILED -DDEFAULT_BASEDIR=\"sdmc:/ioq3\" \
-			-DPRODUCT_VERSION=\"1.0.1\"
+			-DPRODUCT_VERSION=\"1.0.1\" -DNDEBUG
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

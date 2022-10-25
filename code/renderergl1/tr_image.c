@@ -508,7 +508,7 @@ static void Upload32( unsigned *data,
 	GLenum		internalFormat = GL_RGB;
 	float		rMax = 0, gMax = 0, bMax = 0;
 
-	#ifdef _3DS
+	#ifdef __3DS__
 	mipmap = qfalse;
 	#endif
 

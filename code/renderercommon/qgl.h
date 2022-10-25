@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __QGL_H__
 #define __QGL_H__
 
-#ifdef _3DS
+#ifdef __3DS__
 
 #include <GL/picaGL.h>
 
@@ -415,6 +415,6 @@ extern int qglesMajorVersion, qglesMinorVersion;
 #define QGL_VERSION_ATLEAST( major, minor ) ( qglMajorVersion > major || ( qglMajorVersion == major && qglMinorVersion >= minor ) )
 #define QGLES_VERSION_ATLEAST( major, minor ) ( qglesMajorVersion > major || ( qglesMajorVersion == major && qglesMinorVersion >= minor ) )
 
-#endif // _3DS
+#endif // __3DS__
 
 #endif

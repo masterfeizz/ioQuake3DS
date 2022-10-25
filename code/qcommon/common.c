@@ -123,7 +123,7 @@ qboolean	com_gameClientRestarting = qfalse;
 
 char	com_errorMessage[MAXPRINTMSG];
 
-#ifdef _3DS
+#ifdef __3DS__
 extern qboolean isN3DS;
 #endif
 
@@ -1452,7 +1452,7 @@ void Com_InitZoneMemory( void ) {
 		s_zoneTotal = cv->integer * 1024 * 1024;
 	}
 
-	#ifdef _3DS
+	#ifdef __3DS__
 	if(isN3DS)
 		s_zoneTotal = 24 * 1024 * 1024;
 	else
@@ -1586,7 +1586,7 @@ void Com_InitHunkMemory( void ) {
 		s_hunkTotal = cv->integer * 1024 * 1024;
 	}
 
-	#ifdef _3DS
+	#ifdef __3DS__
 	if(isN3DS)
 		s_hunkTotal = 50 * 1024 * 1024;
 	else

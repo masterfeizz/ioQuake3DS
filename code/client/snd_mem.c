@@ -51,7 +51,7 @@ short *sfxScratchBuffer = NULL;
 sfx_t *sfxScratchPointer = NULL;
 int	   sfxScratchIndex = 0;
 
-#ifdef _3DS
+#ifdef __3DS__
 extern qboolean isN3DS;
 #endif
 
@@ -87,7 +87,7 @@ void SND_setup(void) {
 
 	scs = (cv->integer*1024);
 
-	#ifdef _3DS
+	#ifdef __3DS__
 	if(isN3DS)
 		scs = 4 * 1024;
 	else
