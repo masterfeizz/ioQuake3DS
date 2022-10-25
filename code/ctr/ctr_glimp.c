@@ -82,7 +82,7 @@ void GLimp_Init( qboolean coreContext)
 	static int pgl_initialized = 0;
 
 	if(!pgl_initialized)
-		pglInit();
+		pglInitEx(0x040000, 0x100000);
 
 	pgl_initialized = 1;
 	
@@ -123,6 +123,5 @@ Responsible for doing a swapbuffers
 */
 void GLimp_EndFrame( void )
 {
-	pglSwapBuffers();
-	gfxSwapBuffersGpu();
+	pglSwapBuffersEx(true, false);
 }
