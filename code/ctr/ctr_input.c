@@ -70,15 +70,23 @@ static buttonMapping buttonMap[14] =
 };
 
 
-static uint16_t keymap[14 * 6] = 
-{
+static uint16_t keymap[2][14 * 6] =
+{{
 	K_ESCAPE , K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12, 0,
 	K_CONSOLE, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', K_BACKSPACE,
-	K_TAB, 'q' , 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '|',
+	K_TAB, 'q' , 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\',
 	0, 'a' , 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', K_ENTER, K_ENTER,
 	K_SHIFT, 'z' , 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, K_UPARROW, 0,
 	0, 0 , 0, 0, K_SPACE, K_SPACE, K_SPACE, K_SPACE, K_SPACE, K_SPACE, 0, K_LEFTARROW, 	K_DOWNARROW, K_RIGHTARROW
-};
+},
+{
+	K_ESCAPE , K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12, 0,
+	K_CONSOLE, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', K_BACKSPACE,
+	K_TAB, 'Q' , 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '|',
+	0, 'A' , 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', K_ENTER, K_ENTER,
+	K_SHIFT, 'Z' , 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0, K_UPARROW, 0,
+	0, 0 , 0, 0, K_SPACE, K_SPACE, K_SPACE, K_SPACE, K_SPACE, K_SPACE, 0, K_LEFTARROW, 	K_DOWNARROW, K_RIGHTARROW
+}};
 
 static void DrawSubscreen()
 {
@@ -132,7 +140,7 @@ static void UpdateTouch( void )
 
 		if(keyboard_enabled && touch.py > 59 && touch.py < 193 && touch.px > 6 && touch.px < 314)
 		{
-			button_pressed = keymap[((touch.py - 59) / 22) * 14 + (touch.px - 6) / 22];
+			button_pressed = keymap[shift_pressed][((touch.py - 59) / 22) * 14 + (touch.px - 6) / 22];
 		}
 
 		if(touch.py > 213 && touch.px > 135 && touch.px < 185)
