@@ -334,9 +334,23 @@ int main(int argc, char **argv)
 
     APT_CheckNew3DS(&isN3DS);
 
-    gfxInit(GSP_RGB565_OES,GSP_RGB565_OES,false);
+    #if OPENARENA
+    gfxInit(GSP_RGB565_OES, GSP_RGB565_OES, false);
+    #else
+    gfxInit(GSP_BGR8_OES, GSP_RGB565_OES, false);
+    #endif
+
     gfxSetDoubleBuffering(GFX_BOTTOM, false);
     gfxSwapBuffersGpu();
+
+    CFG_SystemModel model;
+
+    cfguInit();
+    CFGU_GetSystemModel(&model);
+    cfguExit();
+    
+    if(model != CFG_MODEL_2DS)
+        gfxSetWide(true);
 
     int i;
     char** argvv = (char**)argv;
