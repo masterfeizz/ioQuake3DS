@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <3ds.h>
 #include <GL/picaGL.h>
 
+extern qboolean isN3DS;
+
 /*
 ===============
 GLimp_Shutdown
@@ -124,4 +126,78 @@ Responsible for doing a swapbuffers
 void GLimp_EndFrame( void )
 {
 	pglSwapBuffersEx(true, false);
+}
+
+/*
+===========================================================
+SMP acceleration
+===========================================================
+*/
+
+LightEvent	renderCommandsEvent;
+LightEvent	renderActiveEvent;
+//LightEvent	renderCompletedEvent;
+
+void ( *glimpRenderThread )( void );
+
+static void GLimp_RenderThreadWrapper(void* arg)
+{
+	glimpRenderThread();
+}
+
+
+/*
+=======================
+GLimp_SpawnRenderThread
+=======================
+*/
+Thread renderThreadHandle;
+
+qboolean GLimp_SpawnRenderThread( void ( *function )( void ) )
+{
+	if(isN3DS == false) return qfalse;
+	
+	LightEvent_Init(&renderCommandsEvent,  RESET_ONESHOT);
+	LightEvent_Init(&renderActiveEvent,    RESET_ONESHOT);
+	//LightEvent_Init(&renderCompletedEvent, RESET_ONESHOT);
+
+	glimpRenderThread = function;
+
+	renderThreadHandle = threadCreate(GLimp_RenderThreadWrapper, 0, 2 * 1024 * 1024, 0x18, isN3DS ? 2 : 1, true);
+
+	return qtrue;
+}
+
+static void *smpData = NULL;
+
+void *GLimp_RendererSleep( void )
+{
+	void  *data;
+
+	// after this, the front end can exit GLimp_FrontEndSleep
+	//LightEvent_Signal(&renderCompletedEvent);
+
+	LightEvent_Wait (&renderCommandsEvent);
+
+	data = smpData;
+
+	LightEvent_Signal(&renderActiveEvent);
+
+	return data;
+}
+
+
+void GLimp_FrontEndSleep( void )
+{
+	//LightEvent_Wait (&renderCompletedEvent);
+}
+
+
+void GLimp_WakeRenderer( void *data )
+{
+	smpData = data;
+
+	LightEvent_Signal(&renderCommandsEvent);
+
+	LightEvent_Wait (&renderActiveEvent);
 }
