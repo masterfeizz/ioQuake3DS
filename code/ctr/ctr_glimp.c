@@ -151,6 +151,13 @@ static void GLimp_RenderThreadWrapper(void* arg)
 GLimp_SpawnRenderThread
 =======================
 */
+
+#if OPENARENA
+#define STACK_SIZE (3 * 1024 * 1024)
+#else
+#define STACK_SIZE (2 * 1024 * 1024)
+#endif
+
 Thread renderThreadHandle;
 
 qboolean GLimp_SpawnRenderThread( void ( *function )( void ) )
@@ -163,7 +170,7 @@ qboolean GLimp_SpawnRenderThread( void ( *function )( void ) )
 
 	glimpRenderThread = function;
 
-	renderThreadHandle = threadCreate(GLimp_RenderThreadWrapper, 0, 2 * 1024 * 1024, 0x18, isN3DS ? 2 : 1, true);
+	renderThreadHandle = threadCreate(GLimp_RenderThreadWrapper, 0, STACK_SIZE, 0x18, isN3DS ? 2 : 1, true);
 
 	return qtrue;
 }
