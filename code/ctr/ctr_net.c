@@ -1131,28 +1131,23 @@ void NET_Sleep(int msec)
 	struct timeval timeout;
 	fd_set fdr;
 	int retval;
-	SOCKET highestfd = INVALID_SOCKET;
+
+	if(ip_socket == INVALID_SOCKET)
+		return;
 
 	if(msec < 0)
 		msec = 0;
 
 	FD_ZERO(&fdr);
 
-	if(ip_socket != INVALID_SOCKET)
-	{
-		FD_SET(ip_socket, &fdr);
-
-		highestfd = ip_socket;
-	}
+	FD_SET(ip_socket, &fdr);
 
 	timeout.tv_sec = msec/1000;
 	timeout.tv_usec = (msec%1000)*1000;
 
-	retval = select(highestfd + 1, &fdr, NULL, NULL, &timeout);
+	retval = select(ip_socket + 1, &fdr, NULL, NULL, &timeout);
 
-	if(retval == SOCKET_ERROR)
-		Com_Printf("Warning: select() syscall failed: %s\n", NET_ErrorString());
-	else if(retval > 0)
+	if(retval > 0)
 		NET_Event(&fdr);
 }
 
