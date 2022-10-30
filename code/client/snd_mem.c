@@ -52,7 +52,7 @@ sfx_t *sfxScratchPointer = NULL;
 int	   sfxScratchIndex = 0;
 
 #ifdef __3DS__
-extern qboolean isN3DS;
+extern int ctr_soundMegs;
 #endif
 
 void	SND_free(sndBuffer *v) {
@@ -87,12 +87,9 @@ void SND_setup(void) {
 
 	scs = (cv->integer*1024);
 
-	#ifdef __3DS__
-	if(isN3DS)
-		scs = 4 * 1024;
-	else
-		scs = 2 * 1024;
-	#endif
+#ifdef __3DS__
+	scs = ctr_soundMegs * 1024;
+#endif
 
 	buffer = malloc(scs*sizeof(sndBuffer) );
 	// allocate the stack based hunk allocator

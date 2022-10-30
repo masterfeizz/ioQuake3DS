@@ -204,6 +204,7 @@ PLATFORM_SOURCES += \
 	ctr/ctr_snd.c \
 	ctr/ctr_net.c \
 	ctr/ctr_main.c \
+	ctr/ctr_heap.c \
 	sys/sys_ctr.c
 
 #---------------------------------------------------------------------------------

@@ -124,7 +124,7 @@ qboolean	com_gameClientRestarting = qfalse;
 char	com_errorMessage[MAXPRINTMSG];
 
 #ifdef __3DS__
-extern qboolean isN3DS;
+extern int ctr_zoneMegs, ctr_hunkMegs;
 #endif
 
 void Com_WriteConfig_f( void );
@@ -1452,12 +1452,9 @@ void Com_InitZoneMemory( void ) {
 		s_zoneTotal = cv->integer * 1024 * 1024;
 	}
 
-	#ifdef __3DS__
-	if(isN3DS)
-		s_zoneTotal = 24 * 1024 * 1024;
-	else
-		s_zoneTotal = 10 * 1024 * 1024;
-	#endif
+#ifdef __3DS__
+	s_zoneTotal = ctr_zoneMegs * 1024 * 1024;
+#endif
 
 	mainzone = calloc( s_zoneTotal, 1 );
 
@@ -1586,12 +1583,9 @@ void Com_InitHunkMemory( void ) {
 		s_hunkTotal = cv->integer * 1024 * 1024;
 	}
 
-	#ifdef __3DS__
-	if(isN3DS)
-		s_hunkTotal = 50 * 1024 * 1024;
-	else
-		s_hunkTotal = 26 * 1024 * 1024;
-	#endif
+#ifdef __3DS__
+	s_hunkTotal = ctr_hunkMegs * 1024 * 1024;
+#endif
 
 	s_hunkData = calloc( s_hunkTotal + 31, 1 );
 
@@ -2763,7 +2757,7 @@ void Com_Init( char *commandLine ) {
 	// init commands and vars
 	//
 	com_altivec = Cvar_Get ("com_altivec", "1", CVAR_ARCHIVE);
-	com_maxfps = Cvar_Get ("com_maxfps", "85", CVAR_ARCHIVE);
+	com_maxfps = Cvar_Get ("com_maxfps", "60", CVAR_ARCHIVE);
 	com_blood = Cvar_Get ("com_blood", "1", CVAR_ARCHIVE);
 
 	com_logfile = Cvar_Get ("logfile", "0", CVAR_TEMP );

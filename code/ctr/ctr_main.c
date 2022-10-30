@@ -42,9 +42,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 
 int __stacksize__ = 1536 * 1024;
-u32 __ctru_linear_heap_size = 8 * 1024 * 1024;
 
 qboolean isN3DS = qfalse;
+
+int ctr_zoneMegs  = 0;
+int ctr_hunkMegs  = 0;
+int ctr_soundMegs = 0;
 
 static char binaryPath[MAX_OSPATH] = {0};
 static char installPath[MAX_OSPATH] = {0};
@@ -323,6 +326,35 @@ void Sys_SigHandler(int signal) {
 
 /*
 =================
+Sys_CalcMemSizes
+=================
+*/
+void Sys_CalcMemSizes()
+{
+    int totalMegs = envGetHeapSize() >> 20;
+
+    if(totalMegs > 88)
+    {
+        ctr_hunkMegs = 52;
+        ctr_zoneMegs = 26;
+        ctr_soundMegs = 6;
+    }
+    else if(totalMegs > 50)
+    {
+        ctr_hunkMegs = 50;
+        ctr_zoneMegs = 24;
+        ctr_soundMegs = 4;
+    }
+    else
+    {
+        ctr_hunkMegs = 26;
+        ctr_zoneMegs = 10;
+        ctr_soundMegs = 4;
+    }
+}
+
+/*
+=================
 main
 =================
 */
@@ -334,27 +366,28 @@ int main(int argc, char **argv)
 
     APT_CheckNew3DS(&isN3DS);
 
-    #if OPENARENA
-    gfxInit(GSP_RGB565_OES, GSP_RGB565_OES, false);
-    #else
-    gfxInit(GSP_BGR8_OES, GSP_RGB565_OES, false);
-    #endif
+    if(isN3DS)
+    {
+        #if OPENARENA
+        gfxInit(GSP_RGB565_OES, GSP_RGB565_OES, false);
+        #else
+        gfxInit(GSP_BGR8_OES, GSP_RGB565_OES, false);
+        #endif
+
+        gfxSetWide(true);
+    }
+    else
+    {
+        gfxInit(GSP_RGB565_OES, GSP_RGB565_OES, false);
+    }
 
     gfxSetDoubleBuffering(GFX_BOTTOM, false);
-    gfxSwapBuffersGpu();
-
-    CFG_SystemModel model;
-
-    cfguInit();
-    CFGU_GetSystemModel(&model);
-    cfguExit();
-    
-    if(model != CFG_MODEL_2DS)
-        gfxSetWide(true);
 
     int i;
     char** argvv = (char**)argv;
     char commandLine[MAX_STRING_CHARS] = {0};
+
+    Sys_CalcMemSizes();
 
     Sys_PlatformInit();
 
